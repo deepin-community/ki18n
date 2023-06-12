@@ -1,11 +1,86 @@
-ki18n (5.90.0-1+deepin1) UNRELEASED; urgency=medium
+ki18n (5.103.0-1) unstable; urgency=medium
 
-  * update
-  * update
+  [ Aurélien COUDERC ]
+  * New upstream release (5.103.0).
+  * Update build-deps and deps with the info from cmake.
 
- -- Debian Qt/KDE Maintainers <debian-qt-kde@lists.debian.org>  Thu, 08 Dec 2022 15:54:47 +0800
+ -- Aurélien COUDERC <coucouf@debian.org>  Sun, 12 Feb 2023 21:44:22 +0100
 
-ki18n (5.90.0-1) experimental; urgency=medium
+ki18n (5.102.0-1) unstable; urgency=medium
+
+  [ Aurélien COUDERC ]
+  * New upstream release (5.102.0).
+  * Update build-deps and deps with the info from cmake.
+  * Bump Standards-Version to 4.6.2, no change required.
+
+ -- Aurélien COUDERC <coucouf@debian.org>  Sun, 22 Jan 2023 21:35:01 +0100
+
+ki18n (5.101.0-1) unstable; urgency=medium
+
+  [ Aurélien COUDERC ]
+  * New upstream release (5.101.0).
+  * Update build-deps and deps with the info from cmake.
+
+ -- Aurélien COUDERC <coucouf@debian.org>  Tue, 13 Dec 2022 07:40:21 +0100
+
+ki18n (5.100.0-1) unstable; urgency=medium
+
+  [ Aurélien COUDERC ]
+  * New upstream release (5.99.0).
+  * Update build-deps and deps with the info from cmake.
+  * New upstream release (5.100.0).
+  * Update build-deps and deps with the info from cmake.
+
+ -- Aurélien COUDERC <coucouf@debian.org>  Sat, 19 Nov 2022 23:18:56 +0100
+
+ki18n (5.98.0-2) UNRELEASED; urgency=medium
+
+  [ Sandro Knauß ]
+  * Add iso-codes as dependency for libkf5i18nlocaledata5.
+
+ -- Debian Qt/KDE Maintainers <debian-qt-kde@lists.debian.org>  Tue, 25 Oct 2022 14:46:47 +0200
+
+ki18n (5.98.0-1) unstable; urgency=medium
+
+  [ Aurélien COUDERC ]
+  * New upstream release (5.98.0).
+  * Update build-deps and deps with the info from cmake.
+
+ -- Aurélien COUDERC <coucouf@debian.org>  Sun, 18 Sep 2022 23:11:35 +0200
+
+ki18n (5.97.0-1) unstable; urgency=medium
+
+  [ Aurélien COUDERC ]
+  * New upstream release (5.97.0).
+
+ -- Aurélien COUDERC <coucouf@debian.org>  Sun, 14 Aug 2022 18:55:28 +0200
+
+ki18n (5.96.0-1) unstable; urgency=medium
+
+  [ Aurélien COUDERC ]
+  * New upstream release (5.96.0).
+  * Bump Standards-Version to 4.6.1, no change required.
+  * Review copyright information.
+
+ -- Aurélien COUDERC <coucouf@debian.org>  Sun, 31 Jul 2022 13:32:56 +0200
+
+ki18n (5.94.0-1) unstable; urgency=medium
+
+  [ Aurélien COUDERC ]
+  * New upstream release (5.94.0).
+
+ -- Aurélien COUDERC <coucouf@debian.org>  Thu, 19 May 2022 23:59:02 +0200
+
+ki18n (5.93.0-1) unstable; urgency=medium
+
+  [ Aurélien COUDERC ]
+  * New upstream release (5.92.0).
+  * Update the list of installed files.
+  * New upstream release (5.93.0).
+
+ -- Aurélien COUDERC <coucouf@debian.org>  Wed, 11 May 2022 23:22:43 +0200
+
+ki18n (5.90.0-1) unstable; urgency=medium
 
   [ Norbert Preining ]
   * New upstream release (5.89.0).

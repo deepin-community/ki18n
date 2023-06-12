@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(KF_VERSION "5.90.0") # handled by release scripts
+set(KF_VERSION "5.103.0") # handled by release scripts
 project(KI18n VERSION ${KF_VERSION})
 
 # ECM setup
 include(FeatureSummary)
-find_package(ECM 5.90.0  NO_MODULE)
+find_package(ECM 5.103.0  NO_MODULE)
 set_package_properties(ECM PROPERTIES TYPE REQUIRED DESCRIPTION "Extra CMake Modules." URL "https://commits.kde.org/extra-cmake-modules")
 feature_summary(WHAT REQUIRED_PACKAGES_NOT_FOUND FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
@@ -22,6 +22,8 @@ include(ECMSetupVersion)
 include(ECMGenerateHeaders)
 include(ECMAddQch)
 include(ECMQtDeclareLoggingCategory)
+include(ECMDeprecationSettings)
+include(ECMQmlModule)
 
 
 ecm_setup_version(
@@ -41,6 +43,9 @@ set(EXCLUDE_DEPRECATED_BEFORE_AND_AT 0 CACHE STRING "Control the range of deprec
 option(BUILD_WITH_QML "Build with support for scripted translations (recommended)" ON)
 if (BUILD_WITH_QML)
    find_package(Qt${QT_MAJOR_VERSION}Qml ${REQUIRED_QT_VERSION} CONFIG REQUIRED)
+endif()
+if (ANDROID AND QT_MAJOR_VERSION EQUAL "5")
+   find_package(Qt5AndroidExtras ${REQUIRED_QT_VERSION} CONFIG REQUIRED)
 endif()
 
 find_package(LibIntl)
@@ -78,7 +83,10 @@ endif()
 
 option(BUILD_QCH "Build API documentation in QCH format (for e.g. Qt Assistant, Qt Creator & KDevelop)" OFF)
 add_feature_info(QCH ${BUILD_QCH} "API documentation in QCH format (for e.g. Qt Assistant, Qt Creator & KDevelop)")
-add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0x050f02)
+
+ecm_set_disabled_deprecation_versions(
+    QT 5.15.2
+)
 
 ki18n_install(po)
 add_subdirectory(src)
@@ -112,7 +120,7 @@ install(FILES  "${CMAKE_BINARY_DIR}/cmake/KF5I18nConfig.cmake"
 install(EXPORT KF5I18nTargets DESTINATION "${CMAKECONFIG_INSTALL_DIR}" FILE KF5I18nTargets.cmake NAMESPACE KF5::)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ki18n_version.h
-        DESTINATION ${KDE_INSTALL_INCLUDEDIR_KF} COMPONENT Devel)
+        DESTINATION ${KDE_INSTALL_INCLUDEDIR_KF}/KI18n COMPONENT Devel)
 
 install( FILES
     ${KI18n_BINARY_DIR}/cmake/KF5I18nMacros.cmake

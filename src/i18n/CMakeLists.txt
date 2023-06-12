@@ -46,6 +46,12 @@ target_include_directories(KF5I18n PRIVATE ${LibIntl_INCLUDE_DIRS})
 target_link_libraries(KF5I18n PUBLIC Qt${QT_MAJOR_VERSION}::Core)
 # This is only required for platforms which don't use glibc (with glibc LibIntl_LIBRARIES will be empty)
 target_link_libraries(KF5I18n PRIVATE ${LibIntl_LIBRARIES})
+if (ANDROID)
+    if (QT_MAJOR_VERSION EQUAL "5")
+        target_link_libraries(KF5I18n PRIVATE Qt5::AndroidExtras)
+    endif()
+    target_link_libraries(KF5I18n PRIVATE android)
+endif()
 target_compile_options(KF5I18n PRIVATE -DTRANSLATION_DOMAIN=\"ki18n5\")
 
 set_target_properties(KF5I18n PROPERTIES VERSION   ${KI18N_VERSION}
@@ -53,7 +59,7 @@ set_target_properties(KF5I18n PROPERTIES VERSION   ${KI18N_VERSION}
                                          EXPORT_NAME I18n
 )
 
-install(TARGETS KF5I18n EXPORT KF5I18nTargets ${KF5_INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS KF5I18n EXPORT KF5I18nTargets ${KF_INSTALL_TARGETS_DEFAULT_ARGS})
 
 ecm_generate_headers(KI18n_HEADERS
   HEADER_NAMES
@@ -65,25 +71,6 @@ ecm_generate_headers(KI18n_HEADERS
     KuitSetup
     REQUIRED_HEADERS KI18n_HEADERS
 )
-
-find_package(PythonModuleGeneration)
-
-if (PythonModuleGeneration_FOUND)
-  ecm_generate_python_binding(
-    TARGET KF5::I18n
-    PYTHONNAMESPACE PyKF5
-    MODULENAME KI18n
-    RULES_FILE "${CMAKE_SOURCE_DIR}/cmake/rules_PyKF5.py"
-    SIP_DEPENDS
-      QtCore/QtCoremod.sip
-    HEADERS
-      klocalizedcontext.h
-      klocalizedstring.h
-      klocalizedtranslator.h
-      kuitmarkup.h
-      kuitsetup.h
-  )
-endif()
 
 install(FILES
     ${KI18n_HEADERS}
@@ -104,7 +91,7 @@ target_sources(ktranscript PRIVATE
 generate_export_header(ktranscript BASE_NAME KTranscript)
 target_link_libraries(ktranscript PRIVATE Qt${QT_MAJOR_VERSION}::Qml Qt${QT_MAJOR_VERSION}::Core)
 
-install(TARGETS ktranscript DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf5)
+install(TARGETS ktranscript DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf${QT_MAJOR_VERSION})
 
 endif()
 
