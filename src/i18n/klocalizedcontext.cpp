@@ -77,36 +77,36 @@ static void resolveMessage(KLocalizedString &trMessage,
                            const QVariant &param7,
                            const QVariant &param8,
                            const QVariant &param9,
-                           const QVariant &param10 = QString())
+                           const QVariant &param10 = QVariant())
 {
-    if (!param1.isNull()) {
+    if (param1.isValid()) {
         subsVariant(trMessage, param1);
     }
-    if (!param2.isNull()) {
+    if (param2.isValid()) {
         subsVariant(trMessage, param2);
     }
-    if (!param3.isNull()) {
+    if (param3.isValid()) {
         subsVariant(trMessage, param3);
     }
-    if (!param4.isNull()) {
+    if (param4.isValid()) {
         subsVariant(trMessage, param4);
     }
-    if (!param5.isNull()) {
+    if (param5.isValid()) {
         subsVariant(trMessage, param5);
     }
-    if (!param6.isNull()) {
+    if (param6.isValid()) {
         subsVariant(trMessage, param6);
     }
-    if (!param7.isNull()) {
+    if (param7.isValid()) {
         subsVariant(trMessage, param7);
     }
-    if (!param8.isNull()) {
+    if (param8.isValid()) {
         subsVariant(trMessage, param8);
     }
-    if (!param9.isNull()) {
+    if (param9.isValid()) {
         subsVariant(trMessage, param9);
     }
-    if (!param10.isNull()) {
+    if (param10.isValid()) {
         subsVariant(trMessage, param10);
     }
 }
@@ -523,7 +523,7 @@ QString KLocalizedContext::xi18ndc(const QString &domain,
         return QString();
     }
 
-    KLocalizedString trMessage = ki18ndc(domain.toUtf8().constData(), context.toUtf8().constData(), message.toUtf8().constData());
+    KLocalizedString trMessage = kxi18ndc(domain.toUtf8().constData(), context.toUtf8().constData(), message.toUtf8().constData());
 
     resolveMessage(trMessage, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
 
@@ -549,7 +549,7 @@ QString KLocalizedContext::xi18ndp(const QString &domain,
         return QString();
     }
 
-    KLocalizedString trMessage = ki18ndp(domain.toUtf8().constData(), singular.toUtf8().constData(), plural.toUtf8().constData());
+    KLocalizedString trMessage = kxi18ndp(domain.toUtf8().constData(), singular.toUtf8().constData(), plural.toUtf8().constData());
 
     resolvePlural(trMessage, param1);
     resolveMessage(trMessage, param2, param3, param4, param5, param6, param7, param8, param9, param10);

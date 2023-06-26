@@ -7,7 +7,7 @@ Uploaders: Aurélien COUDERC <coucouf@debian.org>,
 Build-Depends: cmake (>= 3.16~),
                debhelper-compat (= 13),
                doxygen (>= 1.8.13~),
-               extra-cmake-modules (>= 5.90.0~),
+               extra-cmake-modules (>= 5.103.0~),
                gettext,
                libqt5sql5-sqlite:native,
                pkg-kde-tools (>= 0.15.15ubuntu1~),
@@ -17,7 +17,7 @@ Build-Depends: cmake (>= 3.16~),
                qtdeclarative5-dev (>= 5.15.2~),
                qttools5-dev,
                qttools5-dev-tools (>= 5.4),
-Standards-Version: 4.6.0
+Standards-Version: 4.6.2
 Homepage: https://invent.kde.org/frameworks/ki18n
 Vcs-Browser: https://salsa.debian.org/qt-kde-team/kde/ki18n
 Vcs-Git: https://salsa.debian.org/qt-kde-team/kde/ki18n.git
@@ -26,7 +26,7 @@ Rules-Requires-Root: no
 Package: libkf5i18n-data
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends},
 Description: Advanced internationalization framework.
  Ki18n is the KDE internationalization system for
  user-interface text. It enables localization of
@@ -50,7 +50,7 @@ Depends: gettext,
          python3:any,
          qtscript5-dev (>= 5.8.0~),
          ${misc:Depends},
-Recommends: libkf5i18n-doc (= ${source:Version})
+Recommends: libkf5i18n-doc (= ${source:Version}),
 Description: Advanced internationalization framework.
  Ki18n is the KDE internationalization system for
  user-interface text. It enables localization of
@@ -76,7 +76,7 @@ Breaks: kross-dev (<< 5.54),
 Package: libkf5i18n-doc
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends}
+Depends: ${misc:Depends},
 Description: Advanced internationalization framework (documentation)
  Ki18n is the KDE internationalization system for
  user-interface text. It enables localization of
@@ -169,7 +169,7 @@ Breaks: baloo-kf5 (<< 5.54),
 Package: libkf5i18nlocaledata5
 Architecture: any
 Multi-Arch: same
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: iso-codes, ${misc:Depends}, ${shlibs:Depends},
 Description: Advanced internationalization framework (locale data)
  Ki18n is the KDE internationalization system for
  user-interface text. It enables localization of

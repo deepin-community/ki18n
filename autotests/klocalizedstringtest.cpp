@@ -28,6 +28,16 @@
 #include <QSet>
 #include <QString>
 
+void initEnvironment()
+{
+    // We need the default locale to be English otherwise the brokenTags test fails
+    // since the "Opening and ending tag mismatch" text comes from Qt
+    qputenv("LANG", "en_US.utf8");
+    QStandardPaths::setTestModeEnabled(true);
+}
+
+Q_CONSTRUCTOR_FUNCTION(initEnvironment)
+
 void KLocalizedStringTest::initTestCase()
 {
     KLocalizedString::setApplicationDomain("ki18n-test");
@@ -64,7 +74,8 @@ void KLocalizedStringTest::initTestCase()
         m_hasCatalan = compileCatalogs({QFINDTESTDATA("po/ca/ki18n-test.po")}, dataDir, "ca");
     }
     if (m_hasFrench) {
-        qputenv("XDG_DATA_DIRS", qgetenv("XDG_DATA_DIRS") + ":" + QFile::encodeName(dataDir.path()));
+        const QByteArray dataDirs = qgetenv("XDG_DATA_DIRS") + ":" + QFile::encodeName(dataDir.path());
+        qputenv("XDG_DATA_DIRS", dataDirs);
         // bind... dataDir.path()
         QStringList languages;
         languages.append("fr");
@@ -495,6 +506,12 @@ void KLocalizedStringTest::untranslatedText()
     QCOMPARE(s.untranslatedText(), "Job");
     QCOMPARE(s.toString(), QString::fromUtf8("Tâche"));
     QCOMPARE(s.untranslatedText(), "Job");
+}
+
+void KLocalizedStringTest::brokenStructTagUsages()
+{
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Structuring tag \\('title'\\) cannot be subtag of phrase tag \\('emphasis'\\) in message {.*}."));
+    QCOMPARE(xi18nc("@info", "<emphasis><title>History</title></emphasis>"), QString("<html><i>History</i></html>"));
 }
 
 void KLocalizedStringTest::brokenTags()

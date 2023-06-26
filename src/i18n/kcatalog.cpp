@@ -22,6 +22,29 @@
 #include <QStandardPaths>
 #include <QStringList>
 
+#ifdef Q_OS_ANDROID
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#include <QAndroidJniEnvironment>
+#include <QAndroidJniObject>
+#include <QtAndroid>
+#else
+#include <QCoreApplication>
+#include <QJniEnvironment>
+#include <QJniObject>
+using QAndroidJniObject = QJniObject;
+#endif
+
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+
+#if __ANDROID_API__ < 23
+#include <dlfcn.h>
+#endif
+#endif
+
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
 #include <locale.h>
 #include <stdlib.h>
 
@@ -38,19 +61,55 @@
 extern "C" int Q_DECL_IMPORT _nl_msg_cat_cntr;
 #endif
 
-static char *langenv = nullptr;
-static const int langenvMaxlen = 42;
-// = "LANGUAGE=" + 32 chars for language code + terminating zero
+static char *s_langenv = nullptr;
+static const int s_langenvMaxlen = 64;
+// = "LANGUAGE=" + 54 chars for language code + terminating null \0 character
+
+static void copyToLangArr(const QByteArray &lang)
+{
+    const int bytes = std::snprintf(s_langenv, s_langenvMaxlen, "LANGUAGE=%s", lang.constData());
+    if (bytes < 0) {
+        qCWarning(KI18N) << "There was an error while writing LANGUAGE environment variable:" << std::strerror(errno);
+    } else if (bytes > (s_langenvMaxlen - 1)) { // -1 for the \0 character
+        qCWarning(KI18N) << "The value of the LANGUAGE environment variable:" << lang << "( size:" << lang.size() << "),\n"
+                         << "was longer than (and consequently truncated to) the max. length of:" << (s_langenvMaxlen - strlen("LANGUAGE=") - 1);
+    }
+}
 
 class KCatalogStaticData
 {
 public:
     KCatalogStaticData()
     {
+#ifdef Q_OS_ANDROID
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QAndroidJniEnvironment env;
+        QAndroidJniObject context = QtAndroid::androidContext();
+        m_assets = context.callObjectMethod("getAssets", "()Landroid/content/res/AssetManager;");
+        m_assetMgr = AAssetManager_fromJava(env, m_assets.object());
+#else
+        QJniEnvironment env;
+        QJniObject context = QNativeInterface::QAndroidApplication::context();
+        m_assets = context.callObjectMethod("getAssets", "()Landroid/content/res/AssetManager;");
+        m_assetMgr = AAssetManager_fromJava(env.jniEnv(), m_assets.object());
+#endif
+
+#if __ANDROID_API__ < 23
+        fmemopenFunc = reinterpret_cast<decltype(fmemopenFunc)>(dlsym(RTLD_DEFAULT, "fmemopen"));
+#endif
+#endif
     }
 
     QHash<QByteArray /*domain*/, QString /*directory*/> customCatalogDirs;
     QMutex mutex;
+
+#ifdef Q_OS_ANDROID
+    QAndroidJniObject m_assets;
+    AAssetManager *m_assetMgr = nullptr;
+#if __ANDROID_API__ < 23
+    FILE *(*fmemopenFunc)(void *, size_t, const char *);
+#endif
+#endif
 };
 
 Q_GLOBAL_STATIC(KCatalogStaticData, catalogStaticData)
@@ -94,21 +153,20 @@ KCatalog::KCatalog(const QByteArray &domain, const QString &language_)
         // Invalidate current language, to trigger binding at next translate call.
         KCatalogPrivate::currentLanguage.clear();
 
-        if (!langenv) {
+        if (!s_langenv) {
             // Call putenv only here, to initialize LANGUAGE variable.
-            // Later only change langenv to what is currently needed.
+            // Later only change s_langenv to what is currently needed.
             // This doesn't work on Windows though, so there we need putenv calls on every change
-            langenv = new char[langenvMaxlen];
-            QByteArray baselang = qgetenv("LANGUAGE");
-            qsnprintf(langenv, langenvMaxlen, "LANGUAGE=%s", baselang.constData());
-            putenv(langenv);
+            s_langenv = new char[s_langenvMaxlen];
+            copyToLangArr(qgetenv("LANGUAGE"));
+            putenv(s_langenv);
         }
     }
 }
 
 KCatalog::~KCatalog() = default;
 
-#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) && __ANDROID_API__ < 23
 static QString androidUnpackCatalog(const QString &relpath)
 {
     // the catalog files are no longer extracted to the local file system
@@ -156,7 +214,19 @@ QString KCatalog::catalogLocaleDir(const QByteArray &domain, const QString &lang
     }
 
 #if defined(Q_OS_ANDROID)
-    return androidUnpackCatalog(relpath);
+#if __ANDROID_API__ < 23
+    // fall back to copying the catalog to the file system on old systems
+    // without fmemopen()
+    if (!catalogStaticData->fmemopenFunc) {
+        return androidUnpackCatalog(relpath);
+    }
+#endif
+    const QString assetPath = QLatin1String("assets:/share/locale/") + relpath;
+    if (!QFileInfo::exists(assetPath)) {
+        return {};
+    }
+    return assetPath;
+
 #else
     QString file = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("locale/") + relpath);
 #ifdef Q_OS_WIN
@@ -209,6 +279,28 @@ QSet<QString> KCatalog::availableCatalogLanguages(const QByteArray &domain_)
     return availableLanguages;
 }
 
+#ifdef Q_OS_ANDROID
+static void androidAssetBindtextdomain(const QByteArray &domain, const QByteArray &localeDir)
+{
+    AAsset *asset = AAssetManager_open(catalogStaticData->m_assetMgr, localeDir.mid(8).constData(), AASSET_MODE_UNKNOWN);
+    if (!asset) {
+        qWarning() << "unable to load asset" << localeDir;
+        return;
+    }
+
+    off64_t size = AAsset_getLength64(asset);
+    const void *buffer = AAsset_getBuffer(asset);
+#if __ANDROID_API__ >= 23
+    FILE *moFile = fmemopen(const_cast<void *>(buffer), size, "r");
+#else
+    FILE *moFile = catalogStaticData->fmemopenFunc(const_cast<void *>(buffer), size, "r");
+#endif
+    loadMessageCatalogFile(domain, moFile);
+    fclose(moFile);
+    AAsset_close(asset);
+}
+#endif
+
 void KCatalogPrivate::setupGettextEnv()
 {
     // Point Gettext to current language, recording system value for recovery.
@@ -216,9 +308,9 @@ void KCatalogPrivate::setupGettextEnv()
     if (systemLanguage != language) {
         // putenv has been called in the constructor,
         // it is enough to change the string set there.
-        qsnprintf(langenv, langenvMaxlen, "LANGUAGE=%s", language.constData());
+        copyToLangArr(language);
 #ifdef Q_OS_WINDOWS
-        putenv(langenv);
+        putenv(s_langenv);
 #endif
     }
 
@@ -234,7 +326,15 @@ void KCatalogPrivate::setupGettextEnv()
         bindDone = true;
 
         // qDebug() << "bindtextdomain" << domain << localeDir;
+#ifdef Q_OS_ANDROID
+        if (localeDir.startsWith("assets:/")) {
+            androidAssetBindtextdomain(domain, localeDir);
+        } else {
+            bindtextdomain(domain, localeDir);
+        }
+#else
         bindtextdomain(domain, localeDir);
+#endif
 
 #if HAVE_NL_MSG_CAT_CNTR
         // Magic to make sure GNU Gettext doesn't use stale cached translation
@@ -247,9 +347,9 @@ void KCatalogPrivate::setupGettextEnv()
 void KCatalogPrivate::resetSystemLanguage()
 {
     if (language != systemLanguage) {
-        qsnprintf(langenv, langenvMaxlen, "LANGUAGE=%s", systemLanguage.constData());
+        copyToLangArr(systemLanguage);
 #ifdef Q_OS_WINDOWS
-        putenv(langenv);
+        putenv(s_langenv);
 #endif
     }
 }
